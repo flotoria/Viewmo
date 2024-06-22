@@ -1,4 +1,9 @@
 import Head from 'next/head';
+// import AnimatedTextWord from '@/components/AnimatedTextWord';
+import dynamic from 'next/dynamic';
+const AnimatedTextWord = dynamic(() => import('@/components/AnimatedTextWord'), {
+  ssr: false, // Ensure this component is only rendered on the client side
+});
 
 export default function Home() {
   return (
@@ -6,7 +11,6 @@ export default function Home() {
       <Head>
         <title>vPets - Your Virtual AI Pet</title>
         <meta name="description" content="Your new virtual AI companion" />
-        <link rel="icon" href="/favicon.ico" />
       </Head>
 
       <main className="flex w-full px-4 md:px-20">
@@ -18,8 +22,12 @@ export default function Home() {
         
         <div className="flex flex-col items-center justify-center w-1/2 text-center">
           <header className="mb-12">
-            <h1 className="text-5xl font-bold text-gray-800">Welcome to vPets</h1>
-            <p className="mt-4 text-2xl text-gray-600">Your new virtual AI companion</p>
+            <h1 className="text-5xl font-bold text-gray-800">
+              <AnimatedTextWord text = "Welcome to vPets" />
+            </h1>
+            <div className="mt-4 text-2xl text-gray-600">
+              <AnimatedTextWord text="Your new virtual AI companion" />
+            </div>
           </header>
 
           <section className="mb-12">
