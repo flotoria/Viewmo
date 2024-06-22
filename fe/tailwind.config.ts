@@ -8,6 +8,14 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      colors: {
+        'lightBrown': '#FAEDCD', 
+        'matcha': "#CCD5AE",
+        'matcha-light': "#E9EDC9",
+        'skin': "#FEFAE0",
+        'buttonColor': "#D4A373",
+
+      },
       backgroundImage: {
         "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
         "gradient-conic":
