@@ -1,3 +1,5 @@
-Flask
-Flask-SocketIO
-hume
+fastapi
+uvicorn 
+websocket-client
+python-dotenv
+rel 
