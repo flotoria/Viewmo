@@ -85,7 +85,6 @@ export default function CameraCapture() {
         result.face.predictions[0]
       ) {
         responseToAddVid = result.face.predictions[0].emotions;
-        console.log("PHUC", videoId, responseToAddVid)
         await fetch("http://localhost:8000/api/addVid", {
           method: "POST",
           headers: { "Content-Type" : "application/json" },
@@ -126,20 +125,8 @@ export default function CameraCapture() {
 
   return (
     <>
-      <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4 p-4">
+      <div className="flex flex-col md:flex-row space-y-4 items-center justify-center md:space-y-0 md:space-x-4 p-4">
         <div className="flex flex-col space-y-4">
-          <form className="space-y-2">
-            <label className="block text-4xl font-bold text-gray-700 text-center">
-              Media Link
-              <input
-                type="text"
-                name="link"
-                value={link}
-                onChange={handleChange}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-              />
-            </label>
-          </form>
           {videoId && (
             <YouTube
               videoId={videoId}
@@ -155,7 +142,20 @@ export default function CameraCapture() {
           )} 
 
         </div>
-        <div className="flex flex-col space-y-4 items-center">
+        <div className="flex flex-col space-y-4 items-center justify-center h-screen">
+          <form className="space-y-4">
+            <label className="block text-4xl font-bold text-gray-700 text-center">
+              Media Link
+              <input
+                type="text"
+                name="link"
+                value={link}
+                onChange={handleChange}
+                placeholder="Enter media link here..."
+                className="mt-1 mb-3 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              />
+            </label>
+          </form>
           <video
             ref={videoRef}
             autoPlay
@@ -170,26 +170,23 @@ export default function CameraCapture() {
             style={{ display: "none" }}
           />
 
+          {link !== "" && (
           <Button
-            onClick={() => setRecording((prev) => !prev)}
-            variant="contained"
-            color="primary"
-            className={`w-48 !text-white p-3 rounded-lg transition ${
-              recording
-                ? "bg-red-500 hover:bg-red-700"
-                : "bg-blue-500 hover:bg-blue-700"
-            }`}
-          >
-            {recording ? "Stop Recording" : "Start Recording"}
-          </Button>
+          onClick={() => setRecording((prev) => !prev)}
+          variant="contained"
+          color="primary"
+          className={`w-48 !text-white p-3 rounded-lg transition`}
+          style={{
+            background: recording
+              ? "linear-gradient(45deg, #FF5858, #F09819)"
+              : "linear-gradient(45deg, #56CCF2, #2F80ED)",
+          }}
+        >
+          {recording ? "Stop Recording" : "Start Recording"}
+        </Button>)}
         </div>
-        {/* photoURL && (
-        <div>
-          <h3>Captured Photo:</h3>
-          <img src={photoURL} alt="Captured" width="640" height="480" />
-        </div>
-      ) */}
       </div>
+   
     </>
   );
 }
