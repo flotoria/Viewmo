@@ -5,7 +5,7 @@ import pathlib
 import uuid
 import dotenv
 import os
-from fastapi import Depends, FastAPI, File, Form, UploadFile
+from fastapi import Depends, FastAPI, File, Form, Query, UploadFile
 from fastapi.responses import JSONResponse
 from hume import HumeStreamClient, StreamSocket
 from hume.models.config import FaceConfig
@@ -19,6 +19,7 @@ from sqlalchemy.orm import sessionmaker
 from models import Base, Vid, SessionLocal, engine
 from sqlalchemy.orm import Session
 from typing import List, Optional, Dict
+import json
 
 Base.metadata.create_all(bind=engine)
 
@@ -45,13 +46,11 @@ class Emotion(BaseModel):
 
 class VidCreate(BaseModel):
     video_id: str
-    emotions: Optional[List[Emotion]] = None
-    def dict(self, *args, **kwargs):
-        # Override to convert emotions to list of dictionaries
-        vid_dict = super().dict(*args, **kwargs)
-        if self.emotions is not None:
-            vid_dict['emotions'] = [emotion.dict() for emotion in self.emotions]
-        return vid_dict
+    emotions: Optional[List[List[Emotion]]] = None 
+
+class AverageEmotionScore(BaseModel):
+    name: str
+    average_score: float
 
 @app.post('/api/uploadPhoto')
 async def analyzeImage(file: UploadFile = File(...)):
@@ -77,11 +76,38 @@ def get_db():
 @app.post("/api/addVid", response_model=VidCreate)
 def create_vid(vid: VidCreate, db: Session = Depends(get_db)):
     vid_data = vid.dict()
-    db_vid = Vid(video_id=vid.video_id, emotions=vid_data['emotions'])
+    db_vid = Vid(video_id=vid_data['video_id'], emotions=vid_data['emotions'])
     db.add(db_vid)
     db.commit()
     db.refresh(db_vid)
     return db_vid
 
+@app.get("/api/getVids", response_model=List[VidCreate])
+def get_all_vids(db: Session = Depends(get_db)): 
+    return db.query(Vid).all()
+
+@app.get("/api/average-emotion-scores/", response_model=List[AverageEmotionScore])
+def get_average_emotion_scores(video_id: str = Query(...), db: Session = Depends(get_db)):
+    vids = db.query(Vid).filter(Vid.video_id == video_id).all()
+    emotion_totals: Dict[str, List[float]] = {}
+    
+    for vid in vids:
+        if vid.emotions:
+            for emotion_list in vid.emotions:
+                for emotion in emotion_list:
+                    if (type(emotion) != str):
+                        name = emotion['name']
+                        score = emotion['score']
+                        if name not in emotion_totals:
+                            emotion_totals[name] = []
+                        emotion_totals[name].append(score)
+
+    average_emotion_scores = [
+        AverageEmotionScore(name=name, average_score=sum(scores) / len(scores))
+        for name, scores in emotion_totals.items()
+    ]
+
+    return average_emotion_scores
+
 if __name__ == "__main__":
-  uvicorn.run("server:app", host="0.0.0.0", port=8000, reload=True)
+  uvicorn.run("server:app", host="127.0.0.1", port=8000, reload=True)
