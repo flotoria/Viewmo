@@ -3,7 +3,7 @@ import React, { useRef, useEffect, useState } from "react";
 import YouTube from "react-youtube";
 import Button from "@mui/material/Button";
 import RadioButtonCheckedIcon from "@mui/icons-material/RadioButtonChecked";
-
+import {useRouter} from "next/navigation";
 export default function CameraCapture() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -12,6 +12,7 @@ export default function CameraCapture() {
   const [emotions, setEmotions] = useState<string[]>([]);
   const [videoId, setVideoId] = useState<string>("");
   const [link, setLink] = useState<string>("");
+  const router = useRouter();
 
 
   useEffect(() => {
@@ -60,7 +61,7 @@ export default function CameraCapture() {
         if (photo) {
           await sendPhoto(photo);
         }
-      }, 4000);
+      }, 10000);
     }
     return () => clearInterval(intervalId);
   }, [recording]);
@@ -68,7 +69,7 @@ export default function CameraCapture() {
   const sendPhoto = async (blob: Blob) => {
     const formData = new FormData();
     formData.append("file", blob, "photo.png");
-
+    let responseToAddVid;
     try {
       const response = await fetch("http://localhost:8000/api/uploadPhoto", {
         method: "POST",
@@ -81,12 +82,17 @@ export default function CameraCapture() {
       if (
         result.face &&
         result.face.predictions &&
-        result.face.predictions[0] &&
-        result.face.predictions[0].emotions
+        result.face.predictions[0]
       ) {
-        setEmotions(result.face.predictions[0].emotions);
+        responseToAddVid = result.face.predictions[0].emotions;
+        console.log("PHUC", videoId, responseToAddVid)
+        await fetch("http://localhost:8000/api/addVid", {
+          method: "POST",
+          headers: { "Content-Type" : "application/json" },
+          body: JSON.stringify({ video_id: videoId, emotions: responseToAddVid }),
+        })
       } else {
-        setEmotions([]);
+        responseToAddVid = [];
       }
     } catch (err) {
       console.error("Error sending photo:", err);
@@ -109,6 +115,7 @@ export default function CameraCapture() {
     const url = e.target.value;
     setLink(url);
     const id = extractVideoId(url);
+    // router.push(`/chat/${id}`);
     setVideoId(id);
   };
 
@@ -145,7 +152,8 @@ export default function CameraCapture() {
                 },
               }}
             />
-          )}
+          )} 
+
         </div>
         <div className="flex flex-col space-y-4 items-center">
           <video
@@ -182,18 +190,6 @@ export default function CameraCapture() {
         </div>
       ) */}
       </div>
-      {emotions && (
-        <div className="mt-8">
-          <h3 className="text-xl font-bold mb-4">Emotion Analysis:</h3>
-          <ul className="list-disc list-inside space-y-2">
-            {emotions.map((emotion, index) => (
-              <li className="text-gray-700" key={index}>{`${emotion.name}: ${(
-                emotion.score * 100
-              ).toFixed(2)}%`}</li>
-            ))}
-          </ul>
-        </div>
-      )}
     </>
   );
 }
