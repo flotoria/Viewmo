@@ -4,3 +4,6 @@ websocket-client
 python-dotenv
 rel 
 requests
+hume
+sqlalchemy
+pymysql
