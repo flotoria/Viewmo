@@ -46,7 +46,7 @@ class Emotion(BaseModel):
 
 class VidCreate(BaseModel):
     video_id: str
-    emotions: Optional[List[List[Emotion]]] = None 
+    emotions: Optional[List[Emotion]] = None 
 
 class AverageEmotionScore(BaseModel):
     name: str
@@ -73,16 +73,27 @@ def get_db():
     finally:
         db.close()
 
-@app.post("/api/addVid", response_model=VidCreate)
+@app.post("/api/addVid")
 def create_vid(vid: VidCreate, db: Session = Depends(get_db)):
     vid_data = vid.dict()
-    db_vid = Vid(video_id=vid_data['video_id'], emotions=vid_data['emotions'])
-    db.add(db_vid)
-    db.commit()
-    db.refresh(db_vid)
-    return db_vid
+    # Assuming 'Vid' is your model and 'db' is your database session
+    existing_vids = db.query(Vid).filter(Vid.video_id == vid_data['video_id']).all()
+    
+    if len(existing_vids) >= 1:
+        # Correct approach to append new emotions to the first Vid object's emotions list
+        existing_vids[0].emotions = existing_vids[0].emotions + [vid_data['emotions']]
+        db.commit()
+        print("existing")
+    else:
+        # If there's no record or only one, create a new row
+        db_vid = Vid(video_id=vid_data['video_id'], emotions=[vid_data['emotions']])
+        db.add(db_vid)
+        db.commit()
+        db.refresh(db_vid)
+        print("new")
+        return db_vid
 
-@app.get("/api/getVids", response_model=List[VidCreate])
+@app.get("/api/getVids")
 def get_all_vids(db: Session = Depends(get_db)): 
     return db.query(Vid).all()
 
