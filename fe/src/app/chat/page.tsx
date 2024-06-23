@@ -1,11 +1,13 @@
 'use client'
 import React, { useRef, useEffect, useState } from 'react';
 
+
 export default function CameraCapture() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [recording, setRecording] = useState(false);
   const [photoURL, setPhotoURL] = useState<string | null>(null);
+  const [emotions, setEmotions] = useState<string[]>([]);
 
   useEffect(() => {
     async function enableCamera() {
@@ -42,11 +44,10 @@ export default function CameraCapture() {
     if (recording) {
       intervalId = setInterval(async () => {
         const photo = capturePhoto();
-        console.log('photo:', photo);
         if (photo) {
           await sendPhoto(photo);
         }
-      }, 1000);
+      }, 4000);
     }
     return () => clearInterval(intervalId);
   }, [recording]);
@@ -62,6 +63,12 @@ export default function CameraCapture() {
       });
       if (!response.ok) {
         throw new Error('Failed to upload photo');
+      }
+      const result = await response.json();
+      if (result.face && result.face.predictions && result.face.predictions[0] && result.face.predictions[0].emotions) {
+        setEmotions(result.face.predictions[0].emotions);
+      } else {
+        setEmotions([]);
       }
     } catch (err) {
       console.error('Error sending photo:', err);
@@ -89,12 +96,22 @@ export default function CameraCapture() {
           {recording ? 'Stop Recording' : 'Start Recording'}
         </button>
       </div>
-      {photoURL && (
+      { /* photoURL && (
         <div>
           <h3>Captured Photo:</h3>
           <img src={photoURL} alt="Captured" width="640" height="480" />
         </div>
-      )}
-    </div>
+      ) */ }
+    {emotions && (
+      <div>
+        <h3>Emotion Analysis:</h3>
+        <ul>
+          {emotions.map((emotion, index) => (
+            <li className="text-black" key={index}>{`${emotion.name}: ${(emotion.score * 100).toFixed(2)}%`}</li>
+          ))}
+        </ul>
+      </div>
+    )}
+  </div>
   );
 }
