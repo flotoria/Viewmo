@@ -1,6 +1,8 @@
-'use client'
-import React, { useRef, useEffect, useState } from 'react';
-
+"use client";
+import React, { useRef, useEffect, useState } from "react";
+import YouTube from "react-youtube";
+import Button from "@mui/material/Button";
+import RadioButtonCheckedIcon from "@mui/icons-material/RadioButtonChecked";
 
 export default function CameraCapture() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -8,16 +10,21 @@ export default function CameraCapture() {
   const [recording, setRecording] = useState(false);
   const [photoURL, setPhotoURL] = useState<string | null>(null);
   const [emotions, setEmotions] = useState<string[]>([]);
+  const [videoId, setVideoId] = useState<string>("");
+  const [link, setLink] = useState<string>("");
+
 
   useEffect(() => {
     async function enableCamera() {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+        });
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
         }
       } catch (err) {
-        console.error('Error accessing the camera:', err);
+        console.error("Error accessing the camera:", err);
       }
     }
 
@@ -26,16 +33,22 @@ export default function CameraCapture() {
 
   const capturePhoto = () => {
     if (!canvasRef.current || !videoRef.current) return null;
-    const context = canvasRef.current.getContext('2d');
+    const context = canvasRef.current.getContext("2d");
     if (context) {
-      context.drawImage(videoRef.current, 0, 0, canvasRef.current.width, canvasRef.current.height);
+      context.drawImage(
+        videoRef.current,
+        0,
+        0,
+        canvasRef.current.width,
+        canvasRef.current.height
+      );
       return canvasRef.current.toBlob((blob) => {
         if (blob) {
-          console.log('blob:', blob);
+          console.log("blob:", blob);
           setPhotoURL(URL.createObjectURL(blob));
           sendPhoto(blob);
         }
-      }, 'image/png');
+      }, "image/png");
     }
   };
 
@@ -54,31 +67,36 @@ export default function CameraCapture() {
 
   const sendPhoto = async (blob: Blob) => {
     const formData = new FormData();
-    formData.append('file', blob, 'photo.png');
-  
+    formData.append("file", blob, "photo.png");
+
     try {
-      const response = await fetch('http://localhost:8000/api/uploadPhoto', {
-        method: 'POST',
+      const response = await fetch("http://localhost:8000/api/uploadPhoto", {
+        method: "POST",
         body: formData,
       });
       if (!response.ok) {
-        throw new Error('Failed to upload photo');
+        throw new Error("Failed to upload photo");
       }
       const result = await response.json();
-      if (result.face && result.face.predictions && result.face.predictions[0] && result.face.predictions[0].emotions) {
+      if (
+        result.face &&
+        result.face.predictions &&
+        result.face.predictions[0] &&
+        result.face.predictions[0].emotions
+      ) {
         setEmotions(result.face.predictions[0].emotions);
       } else {
         setEmotions([]);
       }
     } catch (err) {
-      console.error('Error sending photo:', err);
+      console.error("Error sending photo:", err);
     }
   };
 
   const dataURLtoBlob = (dataUrl: string) => {
-    const parts = dataUrl.split(',');
+    const parts = dataUrl.split(",");
     const byteString = atob(parts[1]);
-    const mimeString = parts[0].split(':')[1].split(';')[0];
+    const mimeString = parts[0].split(":")[1].split(";")[0];
     const ab = new ArrayBuffer(byteString.length);
     const ia = new Uint8Array(ab);
     for (let i = 0; i < byteString.length; i++) {
@@ -87,31 +105,95 @@ export default function CameraCapture() {
     return new Blob([ab], { type: mimeString });
   };
 
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const url = e.target.value;
+    setLink(url);
+    const id = extractVideoId(url);
+    setVideoId(id);
+  };
+
+  const extractVideoId = (url: string) => {
+    const urlParts = url.split("v=");
+    return urlParts[1] ? urlParts[1].split("&")[0] : "";
+  };
+
   return (
-    <div>
-      <video ref={videoRef} autoPlay width="640" height="480" />
-      <canvas ref={canvasRef} width="640" height="480" style={{ display: 'none' }} />
-      <div>
-        <button onClick={() => setRecording((prev) => !prev)} className='text-black'>
-          {recording ? 'Stop Recording' : 'Start Recording'}
-        </button>
-      </div>
-      { /* photoURL && (
+    <>
+      <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4 p-4">
+        <div className="flex flex-col space-y-4">
+          <form className="space-y-2">
+            <label className="block text-4xl font-bold text-gray-700 text-center">
+              Media Link
+              <input
+                type="text"
+                name="link"
+                value={link}
+                onChange={handleChange}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              />
+            </label>
+          </form>
+          {videoId && (
+            <YouTube
+              videoId={videoId}
+              className="rounded-lg shadow-lg w-full h-auto"
+              opts={{
+                height: "480",
+                width: "854",
+                playerVars: {
+                  autoplay: 1,
+                },
+              }}
+            />
+          )}
+        </div>
+        <div className="flex flex-col space-y-4 items-center">
+          <video
+            ref={videoRef}
+            autoPlay
+            width="800"
+            height="600"
+            className="rounded-lg shadow-lg"
+          />
+          <canvas
+            ref={canvasRef}
+            width="640"
+            height="480"
+            style={{ display: "none" }}
+          />
+
+          <Button
+            onClick={() => setRecording((prev) => !prev)}
+            variant="contained"
+            color="primary"
+            className={`w-48 !text-white p-3 rounded-lg transition ${
+              recording
+                ? "bg-red-500 hover:bg-red-700"
+                : "bg-blue-500 hover:bg-blue-700"
+            }`}
+          >
+            {recording ? "Stop Recording" : "Start Recording"}
+          </Button>
+        </div>
+        {/* photoURL && (
         <div>
           <h3>Captured Photo:</h3>
           <img src={photoURL} alt="Captured" width="640" height="480" />
         </div>
-      ) */ }
-    {emotions && (
-      <div>
-        <h3>Emotion Analysis:</h3>
-        <ul>
-          {emotions.map((emotion, index) => (
-            <li className="text-black" key={index}>{`${emotion.name}: ${(emotion.score * 100).toFixed(2)}%`}</li>
-          ))}
-        </ul>
+      ) */}
       </div>
-    )}
-  </div>
+      {emotions && (
+        <div className="mt-8">
+          <h3 className="text-xl font-bold mb-4">Emotion Analysis:</h3>
+          <ul className="list-disc list-inside space-y-2">
+            {emotions.map((emotion, index) => (
+              <li className="text-gray-700" key={index}>{`${emotion.name}: ${(
+                emotion.score * 100
+              ).toFixed(2)}%`}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </>
   );
 }
