@@ -20,6 +20,7 @@
     "react": "^18",
     "react-dom": "^18",
     "react-virtualized": "^9.22.5",
+    "react-youtube": "^10.1.0",
     "remeda": "^2.2.0",
     "tailwind-merge": "^2.3.0"
   },
