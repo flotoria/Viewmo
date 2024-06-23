@@ -1,5 +1,8 @@
 'use client'
 import React, { useRef, useEffect, useState } from 'react';
+import YouTube from 'react-youtube';
+import Button from '@mui/material/Button';
+import RadioButtonCheckedIcon from '@mui/icons-material/RadioButtonChecked';
 
 
 export default function CameraCapture() {
@@ -8,6 +11,8 @@ export default function CameraCapture() {
   const [recording, setRecording] = useState(false);
   const [photoURL, setPhotoURL] = useState<string | null>(null);
   const [emotions, setEmotions] = useState<string[]>([]);
+  const [videoId, setVideoId] = useState<string>('');
+  const [link, setLink] = useState<string>('');
 
   useEffect(() => {
     async function enableCamera() {
@@ -87,14 +92,42 @@ export default function CameraCapture() {
     return new Blob([ab], { type: mimeString });
   };
 
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const url = e.target.value;
+    setLink(url);
+    const id = extractVideoId(url);
+    setVideoId(id);
+  };
+
+  const extractVideoId = (url: string) => {
+    const urlParts = url.split('v=');
+    return urlParts[1] ? urlParts[1].split('&')[0] : '';
+  };
+
   return (
-    <div>
+    <>
+    <div className='flex flex-row'>
+      <div className = "flex flex-col">
+      <form>
+          <label className="text-black">
+            Media Link
+            <input type="text" name="link" value={link} onChange={handleChange} />
+          </label>
+        </form>
+        {videoId && <YouTube videoId={videoId} />}
+      </div>
+      <div className = 'flex flex-col'>
       <video ref={videoRef} autoPlay width="640" height="480" />
       <canvas ref={canvasRef} width="640" height="480" style={{ display: 'none' }} />
-      <div>
-        <button onClick={() => setRecording((prev) => !prev)} className='text-black'>
-          {recording ? 'Stop Recording' : 'Start Recording'}
-        </button>
+     
+      <Button
+      onClick={() => setRecording((prev) => !prev)}
+      variant="contained" // You can change the variant to "outlined" or "text" based on your preference
+      color="primary" // You can change the color to "secondary" or other available colors
+      className="text-black" // You can add your custom styles here
+    >
+      {recording ? 'Stop Recording' : 'Start Recording'}
+    </Button>
       </div>
       { /* photoURL && (
         <div>
@@ -102,7 +135,9 @@ export default function CameraCapture() {
           <img src={photoURL} alt="Captured" width="640" height="480" />
         </div>
       ) */ }
-    {emotions && (
+   
+  </div>
+  {emotions && (
       <div>
         <h3>Emotion Analysis:</h3>
         <ul>
@@ -112,6 +147,6 @@ export default function CameraCapture() {
         </ul>
       </div>
     )}
-  </div>
+  </>
   );
 }
