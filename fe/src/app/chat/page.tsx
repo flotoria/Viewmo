@@ -5,6 +5,7 @@ export default function CameraCapture() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [recording, setRecording] = useState(false);
+  const [photoURL, setPhotoURL] = useState<string | null>(null);
 
   useEffect(() => {
     async function enableCamera() {
@@ -23,15 +24,17 @@ export default function CameraCapture() {
 
   const capturePhoto = () => {
     if (!canvasRef.current || !videoRef.current) return null;
-
     const context = canvasRef.current.getContext('2d');
     if (context) {
       context.drawImage(videoRef.current, 0, 0, canvasRef.current.width, canvasRef.current.height);
-      const dataUrl = canvasRef.current.toDataURL('image/jpeg');
-      console.log('data url:', dataUrl);
-      return dataUrl;
+      return canvasRef.current.toBlob((blob) => {
+        if (blob) {
+          console.log('blob:', blob);
+          setPhotoURL(URL.createObjectURL(blob));
+          sendPhoto(blob);
+        }
+      }, 'image/png');
     }
-    return null;
   };
 
   useEffect(() => {
@@ -43,18 +46,17 @@ export default function CameraCapture() {
         if (photo) {
           await sendPhoto(photo);
         }
-      }, 5000); // Capture photo every 5 seconds
+      }, 1000);
     }
     return () => clearInterval(intervalId);
   }, [recording]);
 
-  const sendPhoto = async (dataUrl: string) => {
-    const blob = dataURLtoBlob(dataUrl);
+  const sendPhoto = async (blob: Blob) => {
     const formData = new FormData();
-    formData.append('file', blob, 'photo.jpg');
-
+    formData.append('file', blob, 'photo.png');
+  
     try {
-      const response = await fetch('/api/uploadPhoto', {
+      const response = await fetch('http://localhost:8000/api/uploadPhoto', {
         method: 'POST',
         body: formData,
       });
@@ -87,6 +89,12 @@ export default function CameraCapture() {
           {recording ? 'Stop Recording' : 'Start Recording'}
         </button>
       </div>
+      {photoURL && (
+        <div>
+          <h3>Captured Photo:</h3>
+          <img src={photoURL} alt="Captured" width="640" height="480" />
+        </div>
+      )}
     </div>
   );
 }
