@@ -56,10 +56,6 @@ export default function Create() {
 
     return (
         <div className="text-black p-3">
-            <div className="flex flex-col justify-center">
-                <TextField onChange={(e) => setVideoLink(e.target.value)} label="YouTube Video Link" /> 
-                <Button onClick={submitVideoLink} className="mt-2" variant="contained">Submit</Button>
-            </div>
             <TableContainer className="mt-2" component={Paper}>
                 <Table sx={{ minWidth: 650}} aria-label="simple table">
                     <TableHead>
