@@ -14,6 +14,7 @@ export default function CameraCapture() {
   const [videoId, setVideoId] = useState<string>('');
   const [link, setLink] = useState<string>('');
 
+
   useEffect(() => {
     async function enableCamera() {
       try {
