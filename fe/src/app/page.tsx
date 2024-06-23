@@ -40,7 +40,7 @@ export default function Home() {
             </ul>
           </section>
           <Link href={'/chat'}>
-          <button className="px-8 bg-buttonColor py-4 text-xl font-bold text-white hover:bg-emerald-500" >
+          <button className="px-8 bg-buttonColor py-4 text-xl font-bold bg-emerald-500 text-white hover:bg-matcha" >
             Get Started
           </button>
           </Link>
