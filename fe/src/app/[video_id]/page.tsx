@@ -51,8 +51,8 @@ export default function VideoPage({ params }: { params: { video_id: string } }) 
             <Table sx={{ minWidth: 650 }} aria-label="simple table">
                 <TableHead>
                     <TableRow>
-                        <TableCell className="w-1/3">Emotion</TableCell>
-                        <TableCell className="w-1/3">Average Score</TableCell>
+                        <TableCell className="w-1/3 text-xl">Emotion</TableCell>
+                        <TableCell className="w-1/3 text-xl">Average Score</TableCell>
                     </TableRow>
                 </TableHead>
                 <TableBody>
