@@ -3,3 +3,4 @@ uvicorn
 websocket-client
 python-dotenv
 rel 
+requests
